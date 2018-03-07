@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(rethinking)
 ```
 
 ## Multivariate linear models
@@ -23,6 +24,40 @@ The questions you will have to answer are:
 1.1. Verbal IQ and ADOS
 1.2. Non Verbal IQ and ADOS
 1.3. Social IQ and ADOS
+
+```{r}
+data = subset(Assignment3Data,Assignment3Data$Visit==1 & Assignment3Data$ASD==1)
+
+#We create a model with ADOS as outcome and verbal IQ as predictor
+#Our prior for intercept a is mean 30 SD 10
+#Our prior for slope b 
+model_verbal <- map(
+    alist(
+        ADOS ~ dnorm( mu , sigma ) ,
+        mu <- a + b*VerbalIQ,
+        a ~ dnorm( 30 , 10 ) ,
+        b ~ dnorm( 0 , 10 ) ,
+        sigma ~ dunif( 0 , 50 )
+    ) ,
+    data=data )
+precis(model_verbal)
+
+#Simulate data from the posterior and plot it
+plot( ADOS ~ VerbalIQ , data=data )
+abline( a=coef(model_verbal)["a"] , b=coef(model_verbal)["b"] )
+
+mu = link(model_verbal)
+
+dens(mu)
+
+ADOS.seq = seq(from = 0, to=25, by=1)
+
+mu = link(model_verbal,data=data(ADOS = ADOS.seq))     
+                 
+                 sim.ADOS = sim(model_verbal,data=list(verbal))
+
+
+```
 
 2. Do the different aspects of IQ account for different portions of the variance in ADOS? 
 2.1. Does it make sense to have all IQ measures in the same model? First write a few lines answering the question and motivating your answer, including a discussion as to what happens when you put all of them in the same model. Then build a model following your answer. If your answer is "no", you are not free, you still have to answer: are there alternative ways of answering the question?
